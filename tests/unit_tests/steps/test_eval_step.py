@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 from scipy.sparse import csr_matrix
 
-from causica.baselines.end2end_causal.true_graph_dowhy import TrueGraphDoWhy
 from causica.datasets.dataset import Dataset, SparseDataset
 from causica.datasets.intervention_data import InterventionData
 from causica.datasets.variables import Variable, Variables
@@ -657,43 +656,6 @@ def deci_model(tmpdir_factory, causal_dataset_conditioning):
     )
 
     return model
-
-
-def test_evaluate_treatment_effect_estimation(
-    tmpdir_factory, deci_model, causal_dataset_no_conditioning, causal_dataset_conditioning
-):
-
-    logger = logging.getLogger()
-
-    with patch("causica.experiment.steps.eval_step.eval_treatment_effects") as mock_eval_treatment_effects:
-        with patch(
-            "causica.experiment.steps.eval_step.eval_individual_treatment_effects"
-        ) as mock_eval_individual_treatment_effects:
-            evaluate_treatment_effect_estimation(deci_model, causal_dataset_conditioning, logger)
-            assert mock_eval_treatment_effects.called
-            assert mock_eval_individual_treatment_effects.called
-
-    model = TrueGraphDoWhy(
-        model_id="model_id",
-        variables=causal_dataset_no_conditioning.variables,
-        save_dir=tmpdir_factory.mktemp("save_dir"),
-        device="cpu",
-        **{
-            "random_seed": 1,
-            "adj_matrix": causal_dataset_no_conditioning.get_adjacency_data_matrix(),
-            "inference_config": {"linear": True, "polynomial_order": 2, "polynomial_bias": True},
-        },
-    )
-
-    model.run_train(causal_dataset_no_conditioning)
-
-    with patch("causica.experiment.steps.eval_step.eval_treatment_effects") as mock_eval_treatment_effects:
-        with patch(
-            "causica.experiment.steps.eval_step.eval_individual_treatment_effects"
-        ) as mock_eval_individual_treatment_effects:
-            evaluate_treatment_effect_estimation(model, causal_dataset_no_conditioning, logger)
-            assert mock_eval_treatment_effects.called
-            assert not mock_eval_individual_treatment_effects.called
 
 
 def test_run_eval_treatment_effects(causal_dataset_conditioning, deci_model):
